@@ -1,0 +1,82 @@
+# Install dependencies (PyTorch, VITS requirements, and WebSocket support libraries)
+!pip install torch torchaudio librosa soundfile websockets
+!git clone https://github.com/jaywalnut310/vits
+%cd vits
+!pip install -r requirements.txt
+import tarfile
+
+# File path of the uploaded .tgz file
+tgz_file_path = 'v1a_Urdu_valid.tgz'
+extract_to_path = 'language_data'
+
+# Create the extraction directory if it doesn't exist
+import os
+os.makedirs(extract_to_path, exist_ok=True)
+
+# Extract the .tgz file
+with tarfile.open(tgz_file_path, 'r:gz') as tar_ref:
+    tar_ref.extractall(C:\Users\Vaibhav Shrivastava\Downloads\language_data)
+
+print(f"Dataset extracted to:C:\Users\Vaibhav Shrivastava\Downloads\language_data")
+
+import os
+import librosa
+import soundfile as sf
+
+# Function to normalize audio
+def normalize_audio(input_path, output_path, sample_rate=22050):
+    audio, sr = librosa.load(input_path, sr=sample_rate)
+    norm_audio = librosa.util.normalize(audio)
+    sf.write(output_path, norm_audio, sample_rate)
+
+# Apply normalization to all audio files in the dataset
+os.makedirs("language_data/normalized", exist_ok=True)
+
+for file in os.listdir('language_data/audio'):
+    normalize_audio(
+        input_path=f'language_data/audio/{file}',
+        output_path=f'language_data/normalized/{file}'
+    )
+
+from sklearn.model_selection import train_test_split
+import glob
+
+# List all normalized audio files and create train/validation/test splits
+audio_files = glob.glob('language_data/normalized/*.wav')
+train_files, test_files = train_test_split(audio_files, test_size=0.2, random_state=42)
+val_files, test_files = train_test_split(test_files, test_size=0.5, random_state=42)
+
+# Save file lists for model loading
+with open('train_files.txt', 'w') as f:
+    f.write("\n".join(train_files))
+with open('val_files.txt', 'w') as f:
+    f.write("\n".join(val_files))
+with open('test_files.txt', 'w') as f:
+    f.write("\n".join(test_files))
+# Train the model with the specified configuration file
+!python train.py -c configs/your_config.json -m my_model
+# Define evaluation script or use the provided script in VITS
+# This example assumes you have a simple evaluation script
+!python evaluate_model.py -c configs/your_config.json -m my_model -d test_files.txt
+import websockets
+import asyncio
+import soundfile as sf
+
+# Dummy function to simulate synthesized audio output from text
+def synthesize_audio(text):
+    # Call the VITS model's inference here and return generated audio (numpy array)
+    # Replace this with actual model inference function
+    return [0] * 22050  # Placeholder
+
+async def process_audio(websocket, path):
+    async for message in websocket:
+        audio_data = synthesize_audio(message)
+        with sf.SoundFile("output.flac", mode='x', format='FLAC', samplerate=22050) as file:
+            file.write(audio_data)
+        await websocket.send("Audio processed and saved as output.flac")
+
+# Start WebSocket server
+start_server = websockets.serve(process_audio, "localhost", 8765)
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
+
