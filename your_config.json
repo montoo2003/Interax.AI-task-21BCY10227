@@ -1,0 +1,10 @@
+{
+    "sampling_rate": 22050,
+    "data_path": "path/to/normalized/data",
+    "train_file": "train_files.txt",
+    "val_file": "val_files.txt",
+    "text_cleaners": ["your_language_cleaner"],
+    "phoneme_language": "your_language_code",
+    "batch_size": 16,
+    "learning_rate": 1e-4
+}
